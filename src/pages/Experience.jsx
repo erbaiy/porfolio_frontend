@@ -1,141 +1,178 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Button } from "react-bootstrap";
+import axios from "axios";
 
 export default function Experiences() {
   const [experiences, setExperiences] = useState([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newFormation, setNewFormation] = useState({
-    title: "",
-    location: "",
-    date: "",
+  const [showModal, setShowModal] = useState(false);
+  const [currentExperience, setCurrentExperience] = useState({
+    id: null,
+    name: "",
     description: "",
+    start_date: "",
+    end_date: "",
   });
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/experiences") // Replace with the actual endpoint URL of your Laravel backend
-      .then((response) => response.json())
-      .then((data) => {
-        setExperiences(data.experiences);
-      })
-      .catch((error) => console.log(error));
+    fetchExperiences();
   }, []);
+
+  const fetchExperiences = async () => {
+    try {
+      const response = await axios.get("http://127.0.0.1:8000/api/experiences");
+      setExperiences(response.data.experiences);
+    } catch (error) {
+      console.error("Error loading experiences:", error);
+    }
+  };
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setNewFormation((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    setCurrentExperience((prev) => ({ ...prev, [name]: value }));
+    console.log(currentExperience);
   };
 
-  const handleAddFormation = () => {
-    // Add the logic to handle adding a new formation
+  const handleSubmit = async () => {
+    const method = currentExperience._id ? "PUT" : "POST";
+    const url = currentExperience._id
+      ? `http://127.0.0.1:8000/api/experiences/${currentExperience._id}`
+      : "http://127.0.0.1:8000/api/experiences";
+
+    console.log("ID:", currentExperience._id); // Log the ID
+    console.log("ID:", method); // Log the ID
+    console.log("ID:", url); // Log the ID
+
+    try {
+      await axios[method.toLowerCase()](url, currentExperience);
+      fetchExperiences();
+    } catch (error) {
+      console.error("Error submitting experience:", error);
+    }
+
+    resetFormAndHideModal();
+  };
+
+  const handleEdit = (experience) => {
+    setCurrentExperience(experience);
+    setShowModal(true);
+  };
+
+  const handleDelete = async (experience) => {
+    try {
+      console.log("Deleting experience:", experience);
+      let id = experience._id;
+      console.log(id);
+      await axios.delete(`http://127.0.0.1:8000/api/experiences/${id}`);
+      setExperiences((prevExperiences) =>
+        prevExperiences.filter(
+          (exp) => exp.experience_id !== experience.experience_id
+        )
+      );
+    } catch (error) {
+      console.error("Error deleting experience:", error);
+    }
+  };
+
+  const resetFormAndHideModal = () => {
+    setCurrentExperience({
+      id: null,
+      name: "",
+      description: "",
+      start_date: "",
+      end_date: "",
+    });
+    setShowModal(false);
   };
 
   return (
     <div className="mcw">
-      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+      <Button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        Add Experience
+      </Button>
+      <Modal show={showModal} onHide={resetFormAndHideModal}>
         <Modal.Header closeButton>
-          <Modal.Title>Add Formation</Modal.Title>
+          <Modal.Title>
+            {currentExperience._id ? "Edit Experience" : "Add Experience"}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <input
             type="text"
-            name="title"
+            name="name"
             className="form-control"
-            placeholder="Formation Title"
-            value={newFormation.title}
+            placeholder="Experience Name"
+            value={currentExperience.name}
             onChange={handleInputChange}
           />
           <input
             type="date"
             name="start_date"
             className="form-control"
-            placeholder="Formation Date"
-            value={newFormation.date}
+            value={currentExperience.start_date}
             onChange={handleInputChange}
           />
           <input
             type="date"
             name="end_date"
             className="form-control"
-            placeholder="end Date"
-            value={newFormation.date}
+            value={currentExperience.end_date}
             onChange={handleInputChange}
           />
           <textarea
             name="description"
             className="form-control"
-            placeholder="Formation Description"
-            value={newFormation.description}
+            placeholder="Description"
+            value={currentExperience.description}
             onChange={handleInputChange}
           ></textarea>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+          <Button variant="secondary" onClick={resetFormAndHideModal}>
             Close
           </Button>
-          <Button variant="primary" onClick={handleAddFormation}>
-            Add Formation
+          <Button variant="primary" onClick={handleSubmit}>
+            {currentExperience._id ? "Update" : "Add"} Experience
           </Button>
         </Modal.Footer>
       </Modal>
 
-      <div className="cv">
-        <button
-          className="btn btn-primary"
-          onClick={() => setShowAddModal(true)}
-        >
-          Add Formation
-        </button>
-
-        <table className="table table-striped">
-          <thead>
-            <tr>
-              <th>
-                <input type="checkbox" />
-              </th>
-              <th>
-                <i className="fa fa-star"></i>
-              </th>
-              <th>name</th>
-              <th>Description</th>
-              <th>start_date</th>
-              <th>end_date</th>
-              <th>Date</th>
-              <th>Edit</th>
-              <th>Delete</th>
+      <table className="table table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {experiences.map((experience) => (
+            <tr key={experience.id}>
+              <td>{experience.name}</td>
+              <td>{experience.description}</td>
+              <td>{experience.start_date}</td>
+              <td>{experience.end_date}</td>
+              <td>
+                <Button
+                  variant="info"
+                  size="sm"
+                  onClick={() => handleEdit(experience)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => handleDelete(experience)}
+                >
+                  Delete
+                </Button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {experiences.map((experience) => (
-              <tr key={experience.id}>
-                <td>
-                  <input type="checkbox" />
-                </td>
-                <td>
-                  <i className="fa fa-star"></i>
-                </td>
-                <td>
-                  <b>{experience.name}</b>
-                </td>
-                <td>
-                  <b>{experience.description}</b>
-                </td>
-                <td>
-                  <b>{experience.start_date}</b>
-                </td>
-                <td>
-                  <b>{experience.end_date}</b>
-                </td>
-                <td>{/* Add the Date value here */}</td>
-                <td>{/* Add the Edit button here */}</td>
-                <td>{/* Add the Delete button here */}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

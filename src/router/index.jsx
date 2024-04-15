@@ -1,53 +1,39 @@
-// import { createBrowserRouter } from "react-router-dom";
-// export const router: Router = createBrowserRouter(
-//   routers[
-//     {
-//       path: "/",
-//       elemant: <p>hi from hom</p>,
-//     }
-//   ]
-// );
-// import { BrowserRouter as Router, Route } from "react-router-dom";
-
-// const router = (
-//   <Router>
-//     <Route path="/" component={() => <p>hi from home</p>} />
-//   </Router>
-// );
-
-// export default router;
 import { createBrowserRouter } from "react-router-dom";
 import Users from "../pages/Home";
 import Layout from "../layouts/layout";
 import Experiences from "../pages/Experience";
+import Dashboard from "../Dashboard";
+import Formation from "../pages/Formation";
+import Login from "../pages/Login";
 
 export const router = createBrowserRouter([
   {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/",
     element: <Layout />,
     children: [
       {
-        path: "/",
-        element: <Users />, // Wrap JSX with parentheses
+        index: true, // default route under '/' handled by Layout
+        element: <Users />,
       },
       {
-        path: "/login",
-        element: <p>The Login</p>, // Wrap JSX with parentheses
+        path: "dashboard",
+        element: <Dashboard />,
       },
       {
-        path: "Experiences",
-        element: <Experiences />, // Wrap JSX with parentheses
+        path: "experiences",
+        element: <Experiences />,
       },
       {
-        path: "/informationPersonnelles",
-        element: <p>Information Personnelles</p>, // Wrap JSX with parentheses
+        path: "informationPersonnelles",
+        element: <Dashboard />,
       },
       {
-        path: "/formations",
-        element: <p>Formations</p>, // Wrap JSX with parentheses
-      },
-      {
-        path: "/experiences",
-        element: <p>Experiences</p>, // Wrap JSX with parentheses
+        path: "formations",
+        element: <Formation />,
       },
     ],
   },
